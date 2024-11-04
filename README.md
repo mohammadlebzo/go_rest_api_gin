@@ -2,6 +2,8 @@
 
 ## How to run
 
+Run `./script.sh` or:
+
 - Run `docker compose up -d` to create a MongoDB database.
 - Run `cp .env.sample .env` to copy the content of `.env.sample` to a new `.env` file.
 - Run `go run src/main.go` to run the project.
