@@ -33,13 +33,11 @@ func GenerateToken(id uint) (string, error) {
 }
 
 func TokenValid(c *gin.Context) error {
-	var bToken struct{ Token string }
 	tokenString := ExtractToken(c)
 
-	blockErr := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("blocklist").FindOne(config.CTX, bson.M{"token": tokenString}).Decode(&bToken)
+	blockErr := config.MongoClient.Collection("blocklist").FindOne(config.CTX, bson.M{"token": tokenString}).Err()
 
 	if blockErr == nil {
-		fmt.Println(blockErr)
 		return gin.Error{}
 	}
 
