@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var MongoClient *mongo.Client
+var MongoClient *mongo.Database
 var CTX = context.TODO()
 
 func MakeConnectionMongoDB() error {
@@ -23,7 +23,7 @@ func MakeConnectionMongoDB() error {
 	}
 
 	err = client.Ping(CTX, nil)
-	MongoClient = client
+	MongoClient = client.Database(os.Getenv("DB_NAME"))
 
 	return err
 }

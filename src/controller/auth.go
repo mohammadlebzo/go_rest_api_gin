@@ -6,7 +6,6 @@ import (
 	token "gin_REST_API_ex/src/util"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -37,7 +36,7 @@ func Logout(c *gin.Context) {
 
 	bToken.Token = tokenString
 
-	_, err := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("blocklist").InsertOne(config.CTX, bToken)
+	_, err := config.MongoClient.Collection("blocklist").InsertOne(config.CTX, bToken)
 
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"message": err})
@@ -104,7 +103,7 @@ func GetUserByID(c *gin.Context) {
 
 func GetUsers(c *gin.Context) {
 	var users []model.User
-	cursor, err := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("user").Find(config.CTX, bson.M{})
+	cursor, err := config.MongoClient.Collection("user").Find(config.CTX, bson.M{})
 
 	if err != nil {
 		log.Fatal(err)

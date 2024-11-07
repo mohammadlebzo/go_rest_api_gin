@@ -6,10 +6,10 @@ import (
 	"gin_REST_API_ex/src/middleware"
 	"gin_REST_API_ex/src/model"
 	"log"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func init() {
@@ -20,13 +20,20 @@ func init() {
 	}
 
 	user := model.User{ID: uint(0), Username: "raven", Password: "testRaven621"}
-	user.BeforeSave()
 
-	_, err := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("user").InsertOne(config.CTX, user)
+	err := config.MongoClient.Collection("user").FindOne(config.CTX, bson.M{"id": user.ID}).Err()
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println("------------- Inserting -------------")
+		user.BeforeSave()
+
+		_, errInsert := config.MongoClient.Collection("user").InsertOne(config.CTX, user)
+
+		if errInsert != nil {
+			log.Fatal(err)
+		}
 	}
+
 }
 
 func main() {

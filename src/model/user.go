@@ -4,7 +4,6 @@ import (
 	"gin_REST_API_ex/src/config"
 	token "gin_REST_API_ex/src/util"
 	"html"
-	"os"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,10 +16,23 @@ type User struct {
 	Password string `json:"password"`
 }
 
+func (user *User) BeforeSave() error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+
+	if err != nil {
+		return err
+	}
+
+	user.Username = html.EscapeString(strings.TrimSpace(user.Username))
+	user.Password = string(hashedPassword)
+
+	return nil
+}
+
 func GetUserByID(uid uint) (User, error) {
 	var user User
 
-	err := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("user").FindOne(config.CTX, bson.M{"id": uid}).Decode(&user)
+	err := config.MongoClient.Collection("user").FindOne(config.CTX, bson.M{"id": uid}).Decode(&user)
 
 	if err != nil {
 		return User{}, err
@@ -31,19 +43,11 @@ func GetUserByID(uid uint) (User, error) {
 	return user, nil
 }
 
-func (user *User) PrepareUserPublicly() {
-	user.Password = ""
-}
-
-func VerifyPassword(password, hashedPassword string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-}
-
 func LoginCheck(username string, password string) (string, error) {
 	var err error
 	user := User{}
 
-	err = config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("user").FindOne(config.CTX, bson.M{"username": username}).Decode(&user)
+	err = config.MongoClient.Collection("user").FindOne(config.CTX, bson.M{"username": username}).Decode(&user)
 
 	if err != nil {
 		return "", err
@@ -64,9 +68,13 @@ func LoginCheck(username string, password string) (string, error) {
 	return token, nil
 }
 
+func (user *User) PrepareUserPublicly() {
+	user.Password = ""
+}
+
 func (user *User) SaveUser() (*User, error) {
 	user.BeforeSave()
-	_, err := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("user").InsertOne(config.CTX, user)
+	_, err := config.MongoClient.Collection("user").InsertOne(config.CTX, user)
 
 	if err != nil {
 		return &User{}, err
@@ -75,15 +83,6 @@ func (user *User) SaveUser() (*User, error) {
 	return user, nil
 }
 
-func (user *User) BeforeSave() error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-
-	if err != nil {
-		return err
-	}
-
-	user.Username = html.EscapeString(strings.TrimSpace(user.Username))
-	user.Password = string(hashedPassword)
-
-	return nil
+func VerifyPassword(password, hashedPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
